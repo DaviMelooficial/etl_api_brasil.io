@@ -17,7 +17,3 @@ wheels/
 # variaveis de ambiente
 .env
 .env.*
-raw/
-bronze/
-silver/
-gold/
