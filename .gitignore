@@ -1,0 +1,23 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# variaveis de ambiente
+.env
+.env.*
+raw/
+bronze/
+silver/
+gold/
