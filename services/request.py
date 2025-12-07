@@ -1,5 +1,5 @@
 """
-ENDPOINT DE REQUISIÇÃO:
+ENDPOINT DE REQUISICAO:
 GET /api/v1/dataset/gastos-diretos/
 
 head:
@@ -95,11 +95,12 @@ def carregar_checkpoint(arquivo_checkpoint="dataset/raw/checkpoint.txt"):
     except FileNotFoundError:
         return 2  # Página inicial padrão
 
-def ingestão_gastos_diretos(num_pages):
+def ingestão_gastos_diretos(num_pages, limite_registros=500000):
     """
     Ingere dados da API com processamento streaming e JSONs comprimidos
     Args:
         num_pages: número total de páginas
+        limite_registros: limite máximo de registros a processar (padrão: 500.000)
     """
     checkpoint_path = "dataset/raw/checkpoint.txt"
     
@@ -110,11 +111,17 @@ def ingestão_gastos_diretos(num_pages):
     # Carregar checkpoint
     init = carregar_checkpoint(checkpoint_path)
     print(f"Iniciando da página {init}")
+    print(f"Limite de registros: {limite_registros:,}")
     print("Processamento streaming ativo: dados serão processados conforme chegam\n")
     
     total_processados = 0
     
     for i in range(init, num_pages + 1):
+        # Verificar se atingiu o limite
+        if total_processados >= limite_registros:
+            print(f"\n⚠️  Limite de {limite_registros:,} registros atingido!")
+            print(f"Total processado: {total_processados:,}")
+            break
         while True:
             try:
                 url = f"https://brasil.io/api/v1/dataset/gastos-diretos/gastos/data?page={i}"
@@ -134,6 +141,19 @@ def ingestão_gastos_diretos(num_pages):
                     
                     # 2. Processar dados imediatamente (streaming)
                     if dados.get('results'):
+                        # Verificar quantos registros ainda podem ser processados
+                        registros_pagina = dados['results']
+                        registros_restantes = limite_registros - total_processados
+                        
+                        if registros_restantes <= 0:
+                            print(f"Limite atingido. Parando processamento.")
+                            break
+                        
+                        # Processar apenas os registros permitidos
+                        if len(registros_pagina) > registros_restantes:
+                            print(f"  ⚠️  Processando apenas {registros_restantes} dos {len(registros_pagina)} registros")
+                            dados['results'] = registros_pagina[:registros_restantes]
+                        
                         processar_dados_streaming(dados, i)
                         total_processados += len(dados['results'])
                     
@@ -141,6 +161,11 @@ def ingestão_gastos_diretos(num_pages):
                     salvar_checkpoint(i + 1, checkpoint_path)
                     
                     print(f"Página {i}: Concluída (Total processados: {total_processados:,})\n")
+                    
+                    # Verificar se atingiu o limite após processar
+                    if total_processados >= limite_registros:
+                        print(f"\n✅ Limite de {limite_registros:,} registros atingido!")
+                        break
                     
                     time.sleep(2)  # Tempo entre requisições
                     break  # Sai do while e vai para a próxima página
@@ -158,6 +183,7 @@ def ingestão_gastos_diretos(num_pages):
     print("=" * 60)
     print("Ingestao concluida com sucesso!")
     print(f"Total de registros processados: {total_processados:,}")
+    print(f"Limite configurado: {limite_registros:,}")
     print(f"JSONs comprimidos salvos em: dataset/raw/")
     print(f"Dados particionados por ano_mes em: dataset/bronze/")
     print("=" * 60)

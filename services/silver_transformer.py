@@ -1,9 +1,11 @@
 """
-Módulo de transformação Bronze -> Silver
-Realiza limpeza, validação e padronização dos dados
+Modulo de transformacao Bronze -> Silver
+Realiza limpeza, validacao e padronizacao dos dados
+Usa DuckDB para processamento eficiente
 """
 
 import pandas as pd
+import duckdb
 from pathlib import Path
 import logging
 
@@ -14,32 +16,37 @@ logger = logging.getLogger(__name__)
 
 def ler_dados_bronze():
     """
-    Lê todos os arquivos parquet da camada bronze
+    Le todos os arquivos parquet da camada bronze usando DuckDB
     Returns:
         DataFrame consolidado com todos os dados
     """
     bronze_path = Path("dataset/bronze")
     
     if not bronze_path.exists():
-        raise FileNotFoundError("Pasta bronze não encontrada. Execute primeiro a ingestão de dados.")
+        raise FileNotFoundError("Pasta bronze nao encontrada. Execute primeiro a ingestao de dados.")
     
-    # Buscar todas as partições
+    # Buscar todas as particoes
     particoes = list(bronze_path.glob("ano_mes=*/"))
     
     if not particoes:
-        raise FileNotFoundError("Nenhuma partição encontrada na bronze.")
+        raise FileNotFoundError("Nenhuma particao encontrada na bronze.")
     
     logger.info(f"Encontradas {len(particoes)} partições na bronze")
     
-    # Ler todos os arquivos parquet
-    dfs = []
-    for particao in sorted(particoes):
-        arquivos = list(particao.glob("*.parquet"))
-        for arquivo in arquivos:
-            df = pd.read_parquet(arquivo)
-            dfs.append(df)
+    # Usar DuckDB para ler parquets de forma eficiente
+    logger.info("Lendo dados com DuckDB...")
+    conn = duckdb.connect(':memory:')
     
-    df_bronze = pd.concat(dfs, ignore_index=True)
+    bronze_pattern = str(bronze_path / "**/*.parquet")
+    df_bronze = conn.execute(f"""
+        SELECT * FROM read_parquet('{bronze_pattern}', 
+            hive_partitioning=true,
+            union_by_name=true
+        )
+    """).df()
+    
+    conn.close()
+    
     logger.info(f"Total de registros lidos: {len(df_bronze):,}")
     
     return df_bronze
