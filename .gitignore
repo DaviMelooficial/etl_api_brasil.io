@@ -24,5 +24,8 @@ airflow_home/
 plugins/
 
 # Dados
-dataset/raw/*.gz
+dataset/raw/
+dataset/bronze/
+dataset/silver/
+dataset/gold/
 *.json.gz
