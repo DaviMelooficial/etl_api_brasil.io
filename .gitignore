@@ -22,10 +22,3 @@ wheels/
 logs/
 airflow_home/
 plugins/
-
-# Dados
-dataset/raw/
-dataset/bronze/
-dataset/silver/
-dataset/gold/
-*.json.gz
