@@ -25,3 +25,4 @@ plugins/
 
 # Dados
 dataset/raw/*.gz
+*.json.gz
