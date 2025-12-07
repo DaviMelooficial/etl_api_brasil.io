@@ -17,3 +17,11 @@ wheels/
 # variaveis de ambiente
 .env
 .env.*
+
+# Airflow logs e pastas desnecessárias
+logs/
+airflow_home/
+plugins/
+
+# Dados
+dataset/raw/*.gz
