@@ -1,4 +1,4 @@
-# ETL API Brasil.io - Gastos Diretos do Governo Federal
+# ELT API Brasil.io - Gastos Diretos do Governo Federal
 
 Pipeline ELT com arquitetura Medallion (Raw → Bronze → Silver → Gold) para analise de gastos governamentais, orquestrado pelo Apache Airflow em Docker.
 
